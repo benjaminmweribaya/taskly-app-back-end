@@ -5,7 +5,7 @@ from datetime import datetime
 db = SQLAlchemy()
 
 class User(db.Model, SerializerMixin):
-    tablename = "users"
+    __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -21,7 +21,7 @@ class User(db.Model, SerializerMixin):
 
 
 class TaskList(db.Model, SerializerMixin):
-    tablename = "tasklists"
+    __tablename__ = "tasklists"
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
@@ -33,7 +33,7 @@ class TaskList(db.Model, SerializerMixin):
 
 
 class Task(db.Model, SerializerMixin):
-    tablename = "tasks"
+    __tablename__ = "tasks"
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -52,12 +52,11 @@ class Task(db.Model, SerializerMixin):
 
 
 class TaskAssignment(db.Model, SerializerMixin):
-    tablename = "task_assignments"
+    __tablename__ = "task_assignments"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
-    assigned_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User", back_populates="tasks_assigned")
     task = db.relationship("Task", back_populates="assignments")
@@ -66,7 +65,7 @@ class TaskAssignment(db.Model, SerializerMixin):
 
 
 class Comment(db.Model, SerializerMixin):
-    tablename = "comments"
+    __tablename__ = "comments"
 
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
@@ -77,7 +76,7 @@ class Comment(db.Model, SerializerMixin):
 
 
 class Notification(db.Model, SerializerMixin):
-    tablename = "notifications"
+    __tablename__ = "notifications"
 
     id = db.Column(db.Integer, primary_key=True)
     message = db.Column(db.Text, nullable=False)
