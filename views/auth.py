@@ -32,3 +32,5 @@ def add_user():
 
             return make_response({"success": "user registered successfully"})
 
+
+
