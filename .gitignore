@@ -67,3 +67,4 @@ migrations/
 # Gunicorn logs
 gunicorn_error.log
 task/lib/
+task/lib/
