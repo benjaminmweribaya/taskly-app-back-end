@@ -37,11 +37,9 @@ def get_notifications():
     user_id = get_jwt_identity()
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 5, type=int)
-<<<<<<< HEAD
-    notifications = Notification.query.filter_by(user_id=user_id).all()
-=======
+
     notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
->>>>>>> feature/tasklists
+
 
     return jsonify({
         "notifications": [

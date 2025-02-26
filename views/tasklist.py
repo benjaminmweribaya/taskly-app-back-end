@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
-from models import db, TaskList
+from models import db, TaskList, Task
 from flask_jwt_extended import jwt_required, get_jwt_identity
+
 
 tasklist_bp = Blueprint('tasklist', __name__, url_prefix='/tasklists')
 
@@ -9,7 +10,10 @@ tasklist_bp = Blueprint('tasklist', __name__, url_prefix='/tasklists')
 @jwt_required()
 def get_tasklists():
     user_id = get_jwt_identity()
-    tasklists = TaskList.query.filter_by(user_id=user_id).all()
+    page = request.args.get("page", 1, type=int)  # Default to page 1
+    per_page = request.args.get("per_page", 5, type=int) # Default 5 items per page
+    tasklists = TaskList.query.filter_by(user_id=user_id).paginate(page=page, per_page=per_page, error_out=False)
+    
     return jsonify([{"id": tl.id, "name": tl.name} for tl in tasklists]), 200
 
 # Get a specific task list by ID
