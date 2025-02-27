@@ -1,6 +1,6 @@
 from flask import Blueprint, request, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User
+from models import db, User ,TaskList
 from functools import wraps
 
 user_bp = Blueprint("user_bp", __name__)
@@ -20,13 +20,22 @@ def admin_required(fn):
     
     return wrapper
 
-# Get all users (Admin only)
+# Get all users (Admin and users who created tasklist only)
 @user_bp.route("/users", methods=["GET"])
 @jwt_required()
-@admin_required
 def get_users():
-    users = User.query.all()
-    return make_response([user.to_dict() for user in users]), 200
+    current_user_id = get_jwt_identity()
+    current_user = User.query.get(current_user_id)
+
+    # Allow admins OR users who created a tasklist to get users
+    created_tasklist = TaskList.query.filter_by(user_id=current_user_id).first()
+    
+    if current_user.role == "admin" or created_tasklist:
+        users = User.query.all()
+        return make_response([user.to_dict() for user in users]), 200
+
+    return make_response({"error": "You are not authorized to view users"}), 403
+
 
 # Get a specific user by ID
 @user_bp.route("/users/<int:user_id>", methods=["GET"])
