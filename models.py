@@ -18,7 +18,8 @@ class User(db.Model, SerializerMixin):
     comments = db.relationship("Comment", backref="user", cascade="all, delete-orphan")
     notifications = db.relationship("Notification", backref="user", cascade="all, delete-orphan")
 
-    serialize_rules = ("-password", "-tasks_assigned.user", "-tasklists.user", "-comments.user", "-notifications.user")
+    serialize_rules = ("-password", "-tasks_assigned.user.tasks_assigned", "-tasklists.user.tasklists", 
+                   "-comments.user.comments", "-notifications.user.notifications")
 
 
 class TaskList(db.Model, SerializerMixin):
@@ -30,7 +31,7 @@ class TaskList(db.Model, SerializerMixin):
 
     tasks = db.relationship("Task", backref="tasklist", cascade="all, delete-orphan")
 
-    serialize_rules = ("-user.tasklists", "-tasks.tasklist")
+    serialize_rules = ("-user.tasklists", "-tasks.tasklist.tasks")
 
 
 class Task(db.Model, SerializerMixin):
@@ -49,7 +50,7 @@ class Task(db.Model, SerializerMixin):
     assignments = db.relationship("TaskAssignment", back_populates="task", cascade="all, delete-orphan")
     comments = db.relationship("Comment", backref="task", cascade="all, delete-orphan")
 
-    serialize_rules = ("-tasklist.tasks", "-assignments.task", "-comments.task")
+    serialize_rules = ("-tasklist.tasks.tasklist", "-assignments.task.assignments", "-comments.task.comments")
 
 
 class TaskAssignment(db.Model, SerializerMixin):
@@ -62,7 +63,7 @@ class TaskAssignment(db.Model, SerializerMixin):
     user = db.relationship("User", back_populates="tasks_assigned")
     task = db.relationship("Task", back_populates="assignments")
 
-    serialize_rules = ("-user.tasks_assigned", "-task.assignments")
+    serialize_rules = ("-user.tasks_assigned.task_assignments", "-task.assignments.task_assignments")
 
 
 class Comment(db.Model, SerializerMixin):
@@ -73,7 +74,7 @@ class Comment(db.Model, SerializerMixin):
     task_id = db.Column(db.Integer, db.ForeignKey("tasks.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    serialize_rules = ("-task.comments", "-user.comments")
+    serialize_rules = ("-task.comments.task_comments", "-user.comments.user_comments")
 
 
 class Notification(db.Model, SerializerMixin):
@@ -85,7 +86,7 @@ class Notification(db.Model, SerializerMixin):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
 
-    serialize_rules = ("-user.notifications",)
+    serialize_rules = ("-user.notifications.user_notifications",)
 
 
 class TokenBlocklist(db.Model):
