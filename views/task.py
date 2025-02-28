@@ -10,18 +10,28 @@ task_bp = Blueprint("task_bp", __name__)
 @jwt_required()
 def add_task():
     data = request.get_json()
+
+    # Convert due_date from string to datetime 
+    due_date = None
+    if data.get("due_date"):
+        try:
+            due_date = datetime.strptime(data["due_date"], "%Y-%m-%d")
+        except ValueError:
+            return make_response({"error": "Invalid date format. Use YYYY-MM-DD."}, 400)
+
     new_task = Task(
         title=data["title"],
         description=data.get("description"),
-        due_date=data.get("due_date"),
+        due_date=due_date, 
         priority=data.get("priority", "medium"),
         status=data.get("status", "pending"),
         created_at=datetime.utcnow(),
         tasklist_id=data["tasklist_id"]
     )
+
     db.session.add(new_task)
     db.session.commit()
-    return make_response(new_task.to_dict()), 201
+    return make_response(new_task.to_dict(), 201)
 
 # Retrieve all tasks (supports filtering)
 @task_bp.route("/tasks", methods=["GET"])
@@ -101,3 +111,15 @@ def delete_task(task_id):
     db.session.delete(task)
     db.session.commit()
     return make_response({"message": "Task deleted successfully"}), 200
+
+# feature task in the landing page
+@task_bp.route("/tasks/featured", methods=["GET"])
+def get_featured_tasks():
+    featured_tasks = []
+
+    for priority in ["low", "medium", "high"]:
+        task = Task.query.filter_by(priority=priority).order_by(Task.created_at.desc()).first()
+        if task:
+            featured_tasks.append(task.to_dict())
+
+    return make_response(featured_tasks), 200
