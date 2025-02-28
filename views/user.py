@@ -57,25 +57,25 @@ def get_user(user_id):
     }), 200
 
 # Update user profile
-@user_bp.route("/users/<int:user_id>", methods=["PATCH"])
+@user_bp.route("/users/updateprofile", methods=["PATCH"])
 @jwt_required()
-def update_user(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return make_response({"error": "User not found"}), 404
-
+def update_user():
     current_user_id = get_jwt_identity()
-    if user.id != current_user_id:
-        return make_response({"error": "Unauthorized"}), 403
+    user = db.session.get(User, current_user_id)  # Fetch the authenticated user
+
+    if not user:
+        return make_response({"error": "User not found"}), 404  
 
     data = request.get_json()
-    if "username" in data:
-        user.username = data["username"]
-    if "email" in data:
-        user.email = data["email"]
-    
+    username = data.get("username", user.username)
+    email = data.get("email", user.email)
+
+    user.username = username
+    user.email = email
+
     db.session.commit()
-    return make_response({"success": "User updated successfully", "user": user.to_dict()}), 200
+    return make_response({"success": "User updated successfully"}), 200
+
 
 # Delete user (Admin only)
 @user_bp.route("/users/<int:user_id>", methods=["DELETE"])
