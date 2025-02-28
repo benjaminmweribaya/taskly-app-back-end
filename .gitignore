@@ -68,3 +68,4 @@ migrations/
 gunicorn_error.log
 task/lib/
 task/lib/
+__pycache__/
