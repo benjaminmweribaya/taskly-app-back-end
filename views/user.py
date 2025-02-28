@@ -13,8 +13,8 @@ def admin_required(fn):
     @wraps(fn)
     @jwt_required()
     def wrapper(*args, **kwargs):
-        current_user_id = get_jwt_identity()
-        current_user = User.query.get(current_user_id)
+        user_id = get_jwt_identity()
+        current_user = User.query.get(user_id)
 
         if not current_user or current_user.email not in ADMIN_EMAILS:
             return make_response({"error": "Admin access required"}), 403
@@ -60,8 +60,8 @@ def get_user(user_id):
 @user_bp.route("/users/updateprofile", methods=["PATCH"])
 @jwt_required()
 def update_user():
-    current_user_id = get_jwt_identity()
-    user = db.session.get(User, current_user_id)  # Fetch the authenticated user
+    user_id = get_jwt_identity()
+    user = db.session.get(User,user_id)  
 
     if not user:
         return make_response({"error": "User not found"}), 404  
@@ -77,16 +77,17 @@ def update_user():
     return make_response({"success": "User updated successfully"}), 200
 
 
-# Delete user (Admin only)
-@user_bp.route("/users/<int:user_id>", methods=["DELETE"])
+#Delete user account
+@user_bp.route("/users/deleteacccount", methods=["DELETE"])
 @jwt_required()
-@admin_required
-def delete_user(user_id):
-    user = User.query.get(user_id)
+def delete_user():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)  
+
     if not user:
-        return make_response({"error": "User not found"}), 404
-    
+        return make_response({"error": "User not found"}), 404  
+
     db.session.delete(user)
     db.session.commit()
-    
-    return make_response({"success": "User deleted successfully"}), 200
+
+    return make_response({"success": "Account deleted successfully"}), 200
