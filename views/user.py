@@ -78,7 +78,7 @@ def update_user():
 
 
 #Delete user account
-@user_bp.route("/users/deleteacccount", methods=["DELETE"])
+@user_bp.route("/users/deleteaccount", methods=["DELETE"])
 @jwt_required()
 def delete_user():
     user_id = get_jwt_identity()
