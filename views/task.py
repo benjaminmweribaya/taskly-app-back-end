@@ -5,6 +5,8 @@ from datetime import datetime
 
 task_bp = Blueprint("task_bp", __name__)
 
+ADMIN_EMAILS = ["sera12@gmail.com"]
+
 # Create a new task
 @task_bp.route("/tasks", methods=["POST"])
 @jwt_required()
@@ -71,14 +73,18 @@ def update_task(task_id):
     current_user_id = get_jwt_identity()
     current_user = User.query.get(current_user_id)
 
+    if not current_user:
+        return make_response({"error": "User not found"}), 404
+
     task = Task.query.get(task_id)
     if not task:
         return make_response({"error": "Task not found"}), 404
 
     # Ensure only authorized users can update
-    is_creator = task.tasklist.user_id == current_user_id
-    is_admin = current_user.role == "admin"
-    is_assigned = any(assignment.user_id == current_user_id for assignment in task.assignments)
+    tasklist = task.tasklist  # Fetch the related tasklist
+    is_creator = tasklist and tasklist.user_id == current_user_id  # Check if the task has a tasklist and if the user is the creator
+    is_admin = current_user.email in ADMIN_EMAILS  # Check if the user is an admin
+    is_assigned = any(assignment.user_id == current_user_id for assignment in task.assignments) if task.assignments else False
 
     data = request.get_json()
 
