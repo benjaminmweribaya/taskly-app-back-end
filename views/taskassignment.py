@@ -38,7 +38,11 @@ def assign_users_to_task(task_id):
         if user:
             assignment = TaskAssignment(task_id=task.id, user_id=user.id)
             db.session.add(assignment)
-            assigned_users.append(user.to_dict())
+            assigned_users.append({
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            })
 
     db.session.commit()
     return make_response({"success": "Users assigned successfully", "assigned_users": assigned_users}), 200
