@@ -7,10 +7,9 @@ comments_bp = Blueprint("comments_bp", __name__)
 # Create a comment
 @comments_bp.route("/tasks/<int:task_id>/comments", methods=["POST"])
 @jwt_required()
-def add_comment():
+def add_comment(task_id): 
     data = request.get_json()
     user_id = get_jwt_identity()
-    task_id = data.get("task_id")
     content = data.get("content")
 
     # Check if task exists
