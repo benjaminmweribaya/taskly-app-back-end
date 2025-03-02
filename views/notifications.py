@@ -13,7 +13,7 @@ def send_notification(user_id, message):
     db.session.commit()
     
     # Emit a real-time event
-    socketio.emit(f"notification_{user_id}", {"message": message}, broadcast=True)
+    socketio.emit(f"notification_{user_id}", {"message": message}, to=user_id)
 
 # Create a new notification
 @notifications_bp.route("/notifications", methods=["POST"])
@@ -61,3 +61,27 @@ def mark_as_read(notification_id):
     db.session.commit()
 
     return jsonify({"success": "Notification marked as read"}), 200
+
+
+# Delete a notification
+@notifications_bp.route("/notifications/<int:notification_id>", methods=["DELETE"])
+@jwt_required()
+def delete_notification(notification_id):
+    user_id = get_jwt_identity()  # Get the logged-in user ID
+
+    # Find the notification
+    notification = Notification.query.get(notification_id)
+    
+    if not notification:
+        return jsonify({"error": "Notification not found"}), 404
+
+    # Ensure the user owns the notification
+    if notification.user_id != user_id:
+        return jsonify({"error": "Unauthorized to delete this notification"}), 403
+
+    # Delete the notification
+    db.session.delete(notification)
+    db.session.commit()
+
+    return jsonify({"message": "Notification deleted successfully"}), 200
+
