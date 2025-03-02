@@ -4,7 +4,7 @@ from models import db, Comment, Task
 
 comments_bp = Blueprint("comments_bp", __name__)
 
-# ✅ Create a comment
+# Create a comment
 @comments_bp.route("/tasks/<int:task_id>/comments", methods=["POST"])
 @jwt_required()
 def add_comment():
@@ -31,7 +31,7 @@ def add_comment():
         "comment": {"id": new_comment.id, "content": new_comment.content}
     }), 201
 
-# ✅ Get all comments for a task
+# Get all comments for a task
 @comments_bp.route("/tasks/<int:task_id>/comments", methods=["GET"])
 @jwt_required()
 def get_comments(task_id):
@@ -44,7 +44,7 @@ def get_comments(task_id):
 
     return jsonify({"comments": comments_list}), 200
 
-# ✅ Update a comment (Partial Update)
+# Update a comment (Partial Update)
 @comments_bp.route("/comments/<int:comment_id>", methods=["PATCH"])
 @jwt_required()
 def update_comment(comment_id):
@@ -66,7 +66,7 @@ def update_comment(comment_id):
 
     return jsonify({"error": "No valid content provided"}), 400
 
-# ✅ Delete a comment
+# Delete a comment
 @comments_bp.route("/comments/<int:comment_id>", methods=["DELETE"])
 @jwt_required()
 def delete_comment(comment_id):
