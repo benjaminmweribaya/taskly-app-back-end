@@ -10,20 +10,17 @@ app = Flask(__name__)
 #migration initialization
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///taskly.db"
 
-migrate = Migrate(app, db)
-db.init_app(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
-
-
-if __name__ == "__main__":
-    socketio.run(app, debug=True)
-
-#configure jwt 
-jwt = JWTManager(app)
-jwt.init_app(app)
-
+# Configure JWT before initializing it
 app.config["JWT_SECRET_KEY"] = "uihrfxnkcnpeu"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
+db.init_app(app)
+migrate = Migrate(app, db)
+socketio = SocketIO(app, cors_allowed_origins="*")
+jwt = JWTManager(app)
+
+
+#configure jwt 
+jwt.init_app(app)
 
 from views import *
 
@@ -46,3 +43,6 @@ def check_if_token_revoked(jwt_header, jwt_payload: dict) -> bool:
 @app.route("/")
 def index():
     return jsonify({"message":"Welcome to taskly app backend server"})
+
+if __name__ == "__main__":
+    socketio.run(app, debug=True)
