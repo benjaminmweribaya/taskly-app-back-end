@@ -1,6 +1,6 @@
 from flask import Blueprint, request, make_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Task , User
+from models import db, Task , User ,TaskList ,TaskAssignment
 from datetime import datetime
 
 task_bp = Blueprint("task_bp", __name__)
@@ -80,11 +80,13 @@ def update_task(task_id):
     if not task:
         return make_response({"error": "Task not found"}), 404
 
-    # Ensure only authorized users can update
-    tasklist = task.tasklist  # Fetch the related tasklist
-    is_creator = tasklist and tasklist.user_id == current_user_id  # Check if the task has a tasklist and if the user is the creator
-    is_admin = current_user.email in ADMIN_EMAILS  # Check if the user is an admin
-    is_assigned = any(assignment.user_id == current_user_id for assignment in task.assignments) if task.assignments else False
+    # Fetch the related tasklist properly
+    tasklist = TaskList.query.filter_by(id=task.tasklist_id).first()  # Ensure we fetch the tasklist
+    is_creator = tasklist and tasklist.user_id == current_user_id
+    is_admin = current_user.email in ADMIN_EMAILS
+    is_assigned = TaskAssignment.query.filter_by(task_id=task.id, user_id=current_user_id).first() is not None  
+
+    print(f"DEBUG: User: {current_user.email}, Admin: {is_admin}, Creator: {is_creator}, Assigned: {is_assigned}")
 
     data = request.get_json()
 
@@ -94,7 +96,7 @@ def update_task(task_id):
             task.priority = data["priority"]
         if "due_date" in data:
             task.due_date = data["due_date"]
-    
+
     # Assigned users can only update status
     if is_admin or is_creator or is_assigned:
         if "status" in data:
@@ -104,6 +106,7 @@ def update_task(task_id):
 
     db.session.commit()
     return make_response(task.to_dict()), 200
+
 
 
 # Delete a task
