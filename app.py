@@ -4,15 +4,20 @@ from flask_socketio import SocketIO
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
 from models import db,TokenBlocklist
+import os
 
 app = Flask(__name__)
 
 #migration initialization
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///taskly.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///taskly.db")
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+
 
 # Configure JWT before initializing it
 app.config["JWT_SECRET_KEY"] = "uihrfxnkcnpeu"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
+
+
 db.init_app(app)
 migrate = Migrate(app, db)
 socketio = SocketIO(app, cors_allowed_origins="*")
