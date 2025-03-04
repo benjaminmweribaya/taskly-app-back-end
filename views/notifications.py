@@ -1,43 +1,36 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from flask_socketio import emit
-from models import db, Notification
+from models import db, Notification, User, Task
+from datetime import datetime, timedelta
 from app import socketio  
 
 notifications_bp = Blueprint("notifications_bp", __name__)
 
+def get_user():
+    user_id = get_jwt_identity()
+    return User.query.get(user_id)
+
 # Send real-time notifications to a user
-def send_notification(user_id, message):
-    notification = Notification(user_id=user_id, message=message)
+def send_notification(user_id, message, task_id=None):
+    """Creates and emits a real-time notification."""
+    notification = Notification(user_id=user_id, message=message, task_id=task_id)
     db.session.add(notification)
     db.session.commit()
-    
-    # Emit a real-time event
-    socketio.emit(f"notification_{user_id}", {"message": message}, to=user_id)
 
-# Create a new notification
-@notifications_bp.route("/notifications", methods=["POST"])
-@jwt_required()
-def create_notification():
-    data = request.get_json()
-    user_id = get_jwt_identity()  # Get the logged-in user ID
-    message = data.get("message", "")
-
-    if not message:
-        return jsonify({"error": "Message is required"}), 400
-
-    send_notification(user_id, message)  # Save and emit notification
-
-    return jsonify({"success": "Notification sent"}), 201
+    socketio.emit(f"notification_{user_id}", {"message": message}, room=f"user_{user_id}")
 
 # Get all notifications for the logged-in user
 @notifications_bp.route("/notifications", methods=["GET"])
 @jwt_required()
 def get_notifications():
-    user_id = get_jwt_identity()
+    """Fetches notifications for the logged-in user."""
+    user = get_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 5, type=int)
-    notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    notifications = Notification.query.filter_by(user_id=user.id).order_by(Notification.created_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
 
     return jsonify({
         "notifications": [
@@ -51,8 +44,13 @@ def get_notifications():
 # Mark a notification as read
 @notifications_bp.route("/notifications/<int:notification_id>/read", methods=["PUT"])
 @jwt_required()
-def mark_as_read(notification_id):
-    notification = Notification.query.get(notification_id)
+def mark_notification_as_read(notification_id):
+    """Marks a notification as read."""
+    user = get_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    notification = Notification.query.filter_by(id=notification_id, user_id=user.id).first()
     
     if not notification:
         return jsonify({"error": "Notification not found"}), 404
@@ -63,25 +61,61 @@ def mark_as_read(notification_id):
     return jsonify({"success": "Notification marked as read"}), 200
 
 
+@notifications_bp.route("/notifications/read-all", methods=["PATCH"])
+@jwt_required()
+def mark_all_notifications_as_read():
+    """Marks all notifications as read for the logged-in user."""
+    user = get_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    Notification.query.filter_by(user_id=user.id, is_read=False).update({"is_read": True})
+    db.session.commit()
+    return jsonify({"message": "All notifications marked as read"}), 200
+
 # Delete a notification
 @notifications_bp.route("/notifications/<int:notification_id>", methods=["DELETE"])
 @jwt_required()
 def delete_notification(notification_id):
-    user_id = get_jwt_identity()  # Get the logged-in user ID
-
-    # Find the notification
-    notification = Notification.query.get(notification_id)
+    """Deletes a notification."""
+    user = get_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     
+    notification = Notification.query.filter_by(id=notification_id, user_id=user.id).first()
     if not notification:
         return jsonify({"error": "Notification not found"}), 404
 
-    # Ensure the user owns the notification
-    if notification.user_id != user_id:
-        return jsonify({"error": "Unauthorized to delete this notification"}), 403
-
-    # Delete the notification
     db.session.delete(notification)
     db.session.commit()
 
     return jsonify({"message": "Notification deleted successfully"}), 200
 
+
+@notifications_bp.route("/notifications/settings", methods=["PATCH"])
+@jwt_required()
+def toggle_notifications():
+    """Allows users to enable or disable notifications."""
+    user = get_user()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    data = request.get_json()
+    enable_notifications = data.get("enable_notifications", True)
+    user.notifications_enabled = enable_notifications 
+    db.session.commit()
+    
+    return jsonify({"message": "Notification settings updated", "enabled": enable_notifications}), 200
+
+
+def check_task_deadlines():
+    """Checks for upcoming task deadlines and sends notifications."""
+    upcoming_tasks = Task.query.filter(
+        Task.due_date <= datetime.utcnow() + timedelta(hours=1), 
+        Task.status != "completed"
+    ).all()
+    for task in upcoming_tasks:
+        for assignment in task.assignments:
+            send_notification(assignment.user_id, f"Task '{task.title}' is due soon!")
+
+    db.session.commit()

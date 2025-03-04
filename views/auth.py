@@ -1,10 +1,8 @@
-from flask import make_response, request, Blueprint
+from flask import make_response, request, Blueprint, jsonify
 from models import db, User, TokenBlocklist
 from werkzeug.security import check_password_hash,generate_password_hash
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
+from datetime import datetime, timezone, timedelta
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
 
 auth_bp= Blueprint("auth_bp", __name__)
 
@@ -15,22 +13,21 @@ def add_user():
     username = data["username"]
     email = data["email"]
     password = generate_password_hash(data["password"])
+
+    if not username or not email or not password:
+        return make_response(jsonify({"error": "All fields are required"}), 400)
     
+    if User.query.filter_by(username=username).first():
+        return make_response(jsonify({"error": "Username already exists"}), 409)
+    if User.query.filter_by(email=email).first():
+        return make_response(jsonify({"error": "Email already exists"}), 409)
 
-    check_name = User.query.filter_by(username=username).first()
-    check_email = User.query.filter_by(email=email).first()
+    hashed_password = generate_password_hash(password)
+    new_user = User(username=username, email=email, password=hashed_password)
+    db.session.add(new_user)
+    db.session.commit()
 
-    if check_name:
-        return make_response({"error": "Username already exists"})
-    else:
-        if check_email:
-            return make_response({"error": "Email already exists"})
-        else:
-            new_user = User(username=username, email=email, password=password)
-            db.session.add(new_user)
-            db.session.commit()
-
-            return make_response({"success": "user registered successfully"})
+    return make_response(jsonify({"success": "User registered successfully"}), 201)
 
 # Login
 @auth_bp.route("/login", methods=["POST"])
@@ -38,15 +35,27 @@ def login():
     data = request.get_json()
     email = data["email"]
     password = data["password"]
+
+    if not email or not password:
+        return make_response(jsonify({"error": "Email and password are required"}), 400)
+    
     user = User.query.filter_by(email=email).first()
 
     if user and check_password_hash(user.password, password):
-        access_token = create_access_token(identity=str(user.id))
-        response = make_response({"access_token": access_token})
-    else:
-        response = make_response({"error": "Invalid email or password"}), 400
+        access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(hours=12))
+        refresh_token = create_refresh_token(identity=str(user.id))
+        return make_response(jsonify({"access_token": access_token, "refresh_token": refresh_token}), 200)
 
-    return response
+    return make_response(jsonify({"error": "Invalid email or password"}), 400)
+
+
+# Refresh Token
+@auth_bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    user_id = get_jwt_identity()
+    new_access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=12))
+    return make_response(jsonify({"access_token": new_access_token}), 200)
 
 
 # Get the logged in user details
@@ -57,9 +66,9 @@ def user_profile():
     user = db.session.get(User, user_id)
 
     if user:
-        return make_response({"username": user.username, "email": user.email})
+        return make_response(jsonify({"username": user.username, "email": user.email}), 200)
     else:
-        return make_response({"error": "User doesn't exist"})
+        return make_response(jsonify({"error": "User doesn't exist"}), 404)
 
 
 # Logout
@@ -68,10 +77,12 @@ def user_profile():
 def logout():
     jti = get_jwt()["jti"]
     now = datetime.now(timezone.utc)
-    if jti:
-        db.session.add(TokenBlocklist(jti=jti, created_at=now))
-        db.session.commit()
-        return make_response({"success":"Logged out successfully"})
-    else:
-        return make_response({"error": "User wasn't logged in"})
+    
+    if TokenBlocklist.query.filter_by(jti=jti).first():
+        return make_response(jsonify({"error": "Token already blacklisted"}), 400)
+    
+    db.session.add(TokenBlocklist(jti=jti, created_at=now))
+    db.session.commit()
+    return make_response(jsonify({"success": "Logged out successfully"}), 200)
+
     

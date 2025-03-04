@@ -8,13 +8,16 @@ tasklist_bp = Blueprint('tasklist', __name__, url_prefix='/tasklists')
 # Get all task lists for the authenticated user
 @tasklist_bp.route('/', methods=['GET'])
 @jwt_required()
-def get_tasklists():
+def get_tasklist():
     user_id = get_jwt_identity()
     page = request.args.get("page", 1, type=int)  # Default to page 1
     per_page = request.args.get("per_page", 5, type=int) # Default 5 items per page
-    tasklists = TaskList.query.filter_by(user_id=user_id).paginate(page=page, per_page=per_page, error_out=False)
+    tasklist = TaskList.query.filter_by(user_id=user_id).paginate(page=page, per_page=per_page, error_out=False)
+
+    if not tasklist:
+        return jsonify({"error": "Task list not found"}), 404
     
-    return jsonify([{"id": tl.id, "name": tl.name} for tl in tasklists]), 200
+    return jsonify([{"id": tl.id, "name": tl.name} for tl in tasklist]), 200
 
 # Get a specific task list by ID
 @tasklist_bp.route('/<int:tasklist_id>', methods=['GET'])

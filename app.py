@@ -5,16 +5,18 @@ from flask_jwt_extended import JWTManager
 from datetime import timedelta
 from models import db,TokenBlocklist
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
-#migration initialization
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///taskly.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-
-# Configure JWT before initializing it
-app.config["JWT_SECRET_KEY"] = "uihrfxnkcnpeu"
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
 
 
@@ -23,17 +25,13 @@ migrate = Migrate(app, db)
 socketio = SocketIO(app, cors_allowed_origins="*")
 jwt = JWTManager(app)
 
-
-#configure jwt 
-jwt.init_app(app)
-
 from views import *
 
 app.register_blueprint(user_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(tasklist_bp)
 app.register_blueprint(task_bp)
-app.register_blueprint(taskassignment_bp)
+app.register_blueprint(task_assignment_bp)
 app.register_blueprint(comments_bp)
 app.register_blueprint(notifications_bp)
 
@@ -50,4 +48,5 @@ def index():
     return jsonify({"message":"Welcome to taskly app backend server"})
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    port = int(os.getenv("PORT", 5000)) 
+    socketio.run(app, host="0.0.0.0", port=port, debug=os.getenv("FLASK_ENV") != "production")
