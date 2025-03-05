@@ -1,12 +1,9 @@
-from flask import Blueprint, request, make_response
+from flask import Blueprint, request, make_response, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User , TaskList
+from models import db, User 
 from functools import wraps
 
 user_bp = Blueprint("user_bp", __name__)
-
-
-ADMIN_EMAILS = ["sera12@gmail.com"]  # Add more emails if needed
 
 # Admin Role Required Decorator
 def admin_required(fn):
@@ -14,42 +11,44 @@ def admin_required(fn):
     @jwt_required()
     def wrapper(*args, **kwargs):
         user_id = get_jwt_identity()
-        current_user = User.query.get(user_id)
+        current_user = db.session.get(User, user_id)
 
-        if not current_user or current_user.email not in ADMIN_EMAILS:
+        if not current_user or current_user.role != "admin":
             return make_response({"error": "Admin access required"}), 403
 
         return fn(*args, **kwargs)
 
     return wrapper
 
-# Get all users (Admin and users who created a tasklist only)
+# Get all users (Admin Only)
 @user_bp.route("/users", methods=["GET"])
 @jwt_required()
+@admin_required
 def get_users():
-    current_user_id = get_jwt_identity()
-    current_user = User.query.get(current_user_id)
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
 
-    # Allow only admins or users who created a tasklist
-    created_tasklist = TaskList.query.filter_by(user_id=current_user_id).first()
+    users = User.query.paginate(page=page, per_page=per_page, error_out=False)
 
-    if current_user.email in ADMIN_EMAILS or created_tasklist:
-        users = User.query.all()
-        return make_response(
-            [{"id": user.id, "username": user.username, "email": user.email} for user in users]
-        ), 200
+    return jsonify({
+        "users": [
+            {"id": user.id, "username": user.username, "email": user.email, "role": user.role}
+            for user in users.items
+        ],
+        "total": users.total,
+        "pages": users.pages,
+        "current_page": users.page
+    }), 200
 
-    return make_response({"error": "You are not authorized to view users"}), 403
 
 # Get a specific user by ID
 @user_bp.route("/users/<int:user_id>", methods=["GET"])
 @jwt_required()
 def get_user(user_id):
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if not user:
         return make_response({"error": "User not found"}), 404
 
-    # Return only id, username, and email
     return make_response({
         "id": user.id,
         "username": user.username,
@@ -69,6 +68,10 @@ def update_user():
     data = request.get_json()
     username = data.get("username", user.username)
     email = data.get("email", user.email)
+
+    # Ensure new email is unique
+    if email != user.email and User.query.filter_by(email=email).first():
+        return make_response({"error": "Email already in use"}), 400
 
     user.username = username
     user.email = email
