@@ -9,8 +9,8 @@ with app.app_context():
     db.create_all()
 
     # Create users
-    user1 = User(username="john_doe", email="john@example.com", password="hashedpassword1")
-    user2 = User(username="jane_smith", email="jane@example.com", password="hashedpassword2")
+    user1 = User(username="john_doe", email="john@example.com", password="hashedpassword1", role="user", notifications_enabled=True)
+    user2 = User(username="jane_smith", email="jane@example.com", password="hashedpassword2", role="user", notifications_enabled=True)
 
     db.session.add_all([user1, user2])
     db.session.commit()
@@ -23,10 +23,22 @@ with app.app_context():
     db.session.commit()
 
     # Create tasks
-    task1 = Task(title="Finish report", description="Complete the annual report.", due_date=datetime(2025, 3, 1),
-                 priority="high", status="pending", tasklist_id=tasklist1.id)
-    task2 = Task(title="Buy groceries", description="Milk, eggs, bread.", due_date=datetime(2025, 3, 2),
-                 priority="low", status="pending", tasklist_id=tasklist2.id)
+    task1 = Task(
+        title="Finish report", 
+        description="Complete the annual report.", 
+        due_date=datetime(2025, 3, 1),
+        priority="high", 
+        status="todo", 
+        tasklist_id=tasklist1.id
+    )
+    task2 = Task(
+        title="Buy groceries", 
+        description="Milk, eggs, bread.", 
+        due_date=datetime(2025, 3, 2),
+        priority="low", 
+        status="todo", 
+        tasklist_id=tasklist2.id
+    )
 
     db.session.add_all([task1, task2])
     db.session.commit()
@@ -46,8 +58,8 @@ with app.app_context():
     db.session.commit()
 
     # Add notifications
-    notification1 = Notification(message="Task assigned to you.", user_id=user1.id)
-    notification2 = Notification(message="Task updated.", user_id=user2.id)
+    notification1 = Notification(message="Task assigned to you.", user_id=user1.id, task_id=task1.id)
+    notification2 = Notification(message="Task updated.", user_id=user2.id, task_id=task2.id)
 
     db.session.add_all([notification1, notification2])
     db.session.commit()

@@ -1,9 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
-from sqlalchemy import Enum
+from sqlalchemy.dialects.postgresql import ENUM
 from datetime import datetime
 
 db = SQLAlchemy()
+
+# Enum types
+priority_enum = ENUM("low", "medium", "high", "urgent", name="priority_levels", create_type=True)
+status_enum = ENUM("pending", "in-progress", "completed", "todo", name="task_status", create_type=True)
 
 class User(db.Model, SerializerMixin):
     __tablename__ = "users"
@@ -51,19 +55,22 @@ class Task(db.Model, SerializerMixin):
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
     due_date = db.Column(db.DateTime, nullable=True)
-    priority = db.Column(Enum("low", "medium", "high", name="priority_levels"), default="medium")
-    status = db.Column(Enum("pending", "in-progress", "completed", name="task_status"), default="pending")
+    priority = db.Column(priority_enum, nullable=False, default="medium")
+    status = db.Column(status_enum, nullable=False, default="todo") 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    tasklist_id = db.Column(db.Integer, db.ForeignKey("tasklists.id"), nullable=False)
+    tasklist_id = db.Column(db.Integer, db.ForeignKey("tasklists.id", ondelete="CASCADE"), nullable=False)
     
     assignments = db.relationship("TaskAssignment", back_populates="task", cascade="all, delete-orphan")
     comments = db.relationship("Comment", backref="task", cascade="all, delete-orphan")
+    notifications = db.relationship("Notification", backref="task", cascade="all, delete-orphan")
 
     serialize_rules = (
         "-tasklist",
         "-assignments",
-        "-comments.task"
+        "-comments.task",
+        "-notifications.task"
     )
 
 
