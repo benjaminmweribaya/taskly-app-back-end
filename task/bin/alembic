@@ -1,4 +1,4 @@
-#!/home/nadifo/taskly-app-back-end/task/bin/python3
+#!/home/nadifo/taskly-app-back-end/task/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

@@ -1,22 +1,19 @@
 import logging
 from collections import defaultdict
-import typing as t
 
 
-logger = logging.getLogger("serializer")
+logger = logging.getLogger('serializer')
 
 
 class Tree(defaultdict):
-    def __init__(
-        self, to_include=None, to_exclude=None, is_greedy=True, *args, **kwargs
-    ):
+    def __init__(self, to_include=None, to_exclude=None, is_greedy=True, *args, **kwargs):
         super(Tree, self).__init__(*args, **kwargs)
         self.default_factory = Tree
         self.to_include = to_include
         self.to_exclude = to_exclude
         self.is_greedy = is_greedy
 
-    def apply(self, node: "Tree"):
+    def apply(self, node: 'Tree'):
         if self.is_greedy and not node.is_greedy:
             # Apply strictness to all subtrees
             # not included into the node
@@ -40,30 +37,30 @@ class Tree(defaultdict):
             tree.to_strict()
 
     def __repr__(self):
-        include = f"to_include={self.to_include}"
-        exclude = f"to_exclude={self.to_exclude}"
-        greedy = f"is_greedy={self.is_greedy}"
-        keys = "\n".join(f"{k}: {v}".replace("\n", "\n  ") for k, v in self.items())
-        keys = f"\n{keys}" if keys else ""
-        return f"Tree({include}, {exclude}, {greedy})[{keys}]"
+        include = f'to_include={self.to_include}'
+        exclude = f'to_exclude={self.to_exclude}'
+        greedy = f'is_greedy={self.is_greedy}'
+        keys = '\n'.join(f'{k}: {v}'.replace('\n', '\n  ') for k, v in self.items())
+        keys = f'\n{keys}' if keys else ''
+        return f'Tree({include}, {exclude}, {greedy})[{keys}]'
 
 
 class Rule:
-    DELIM = "."  # Delimiter to separate nested rules
-    NEGATION = "-"  # Prefix for negative rules
+    DELIM = '.'  # Delimiter to separate nested rules
+    NEGATION = '-'  # Prefix for negative rules
 
     def __init__(self, rule: str):
         self.is_negative = rule.startswith(self.NEGATION)
-        rule = rule.replace(self.NEGATION, "")
+        rule = rule.replace(self.NEGATION, '')
         self.keys = rule.split(self.DELIM)
 
     def __repr__(self):
         prefix = self.NEGATION if self.is_negative else ""
-        return f"{prefix}{self.DELIM.join(self.keys)}"
+        return f'{prefix}{self.DELIM.join(self.keys)}'
 
 
 class Schema:
-    def __init__(self, tree: t.Optional[Tree] = None):
+    def __init__(self, tree: Tree = None):
         self._tree = tree or Tree()
 
     @property
@@ -83,7 +80,7 @@ class Schema:
     def apply(self, rules, is_greedy):
         rules_tree = Tree()
         for raw in rules:
-            logger.debug("Checking rule:%s", raw)
+            logger.debug('Checking rule:%s', raw)
             rule = Rule(raw)
 
             current = self._tree
@@ -102,7 +99,7 @@ class Schema:
                     new.is_greedy = is_greedy
 
                 if not node and node.to_exclude:
-                    logger.debug("Ignore rule:%s leaf excludes key:%s", raw, k)
+                    logger.debug('Ignore rule:%s leaf excludes key:%s', raw, k)
                     break
 
                 if rule.is_negative:
@@ -112,18 +109,16 @@ class Schema:
 
                 if is_last_key:
                     if not parent.is_greedy:
-                        logger.debug(
-                            "Ignore rule:%s parent does not accept new rules", raw
-                        )
+                        logger.debug('Ignore rule:%s parent does not accept new rules', raw)
                     elif rule.is_negative and node.to_include:
-                        logger.debug("Ignore rule:%s leaf includes key:%s", raw, k)
+                        logger.debug('Ignore rule:%s leaf includes key:%s', raw, k)
                     else:
                         merge_trees(rules_tree, chain)
                 else:
                     current = node  # Go deeper
 
         if rules_tree:
-            logger.debug("Updating tree with rules:%s is_greedy:%s", rules, is_greedy)
+            logger.debug('Updating tree with rules:%s is_greedy:%s', rules, is_greedy)
             merge_trees(self._tree, rules_tree)
 
     def is_included(self, key: str) -> bool:
@@ -135,12 +130,13 @@ class Schema:
         else:
             return bool(node is not None and node.to_include)
 
-    def fork(self, key: str) -> "Schema":
+    def fork(self, key: str) -> 'Schema':
         return Schema(tree=self._tree[key])
 
 
 def merge_trees(old: Tree, *trees):
     for tree in trees:
+        # logger.debug('Merging trees:\nold->\n%s\nnew->\n:%s', old, tree)
         old.apply(tree)
         for k in tree.keys():
             merge_trees(old[k], tree[k])
