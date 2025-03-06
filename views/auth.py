@@ -10,9 +10,9 @@ auth_bp= Blueprint("auth_bp", __name__)
 @auth_bp.route("/register",methods=["POST"])
 def add_user():
     data = request.get_json()
-    username = data["username"]
-    email = data["email"]
-    password = generate_password_hash(data["password"])
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
 
     if not username or not email or not password:
         return make_response(jsonify({"error": "All fields are required"}), 400)
@@ -29,17 +29,17 @@ def add_user():
 
     return make_response(jsonify({"success": "User registered successfully"}), 201)
 
-# Login
+# Login (allow username or email)
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
-    email = data["email"]
-    password = data["password"]
+    identifier = data.get("identifier")
+    password = data.get("password")
 
-    if not email or not password:
-        return make_response(jsonify({"error": "Email and password are required"}), 400)
+    if not identifier or not password:
+        return make_response(jsonify({"error": "Username/Email and password are required"}), 400)
     
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter((User.email == identifier) | (User.username == identifier)).first()
 
     if user and check_password_hash(user.password, password):
         access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(hours=12))
@@ -59,7 +59,7 @@ def refresh():
 
 
 # Get the logged in user details
-@auth_bp.route("/profile")    
+@auth_bp.route("/profile", methods=["GET"])    
 @jwt_required()
 def user_profile():
     user_id = get_jwt_identity()
