@@ -2,7 +2,7 @@
  **Overview**
 Taskly is a task management system designed to help users efficiently organize and track their tasks. This backend, built with Flask, handles user management, task assignments, comments, notifications, and real-time updates
 
-**By Benjamin Baya, Rome Otieno , Larry Macha and Nadifo Ismail**
+**By Benjamin Baya, Rome Ojuro , Larry Mecha and Nadifo Ismail**
 
 ## Resources
 - Deployed Backend: [https://taskly-app-q35u.onrender.com]
