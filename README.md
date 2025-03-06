@@ -71,4 +71,4 @@ None reported. Feel free to open an issue if you encounter any problems.
 ## License
 LIcenced under the [https://github.com/benjaminmweribaya/taskly-app-back-end/blob/main/LICENSE.md]
 
-Copyright (c) 2025 Benjamin Baya, Rome Otieno , Larry Macha and Nadifo Ismail
+Copyright (c) 2025 Benjamin Baya, Rome Ojuro , Larry Mecha and Nadifo Ismail
