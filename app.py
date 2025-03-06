@@ -5,13 +5,22 @@ from flask_jwt_extended import JWTManager
 from datetime import timedelta
 from models import db,TokenBlocklist
 from flask_cors import CORS
+from flask_mail import Mail
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ALLOWED_ORIGINS", "*")}})
+
+app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+
+mail = Mail(app)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///taskly.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL

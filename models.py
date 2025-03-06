@@ -17,13 +17,17 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="user")
+    notifications_enabled = db.Column(db.Boolean, default=True)  
+    is_verified = db.Column(db.Boolean, default=False)
+    verification_token = db.Column(db.String(100), nullable=True)
+    reset_token = db.Column(db.String(100), nullable=True)
+    token_expiry = db.Column(db.DateTime, nullable=True)
 
     tasklists = db.relationship("TaskList", backref="user", cascade="all, delete-orphan")
     tasks_assigned = db.relationship("TaskAssignment", back_populates="user", cascade="all, delete-orphan")
     comments = db.relationship("Comment", backref="user", cascade="all, delete-orphan")
     notifications = db.relationship("Notification", backref="user", cascade="all, delete-orphan")
-    notifications_enabled = db.Column(db.Boolean, default=True)  
-
+    
     serialize_rules = (
         "-password",
         "-tasks_assigned.user",
