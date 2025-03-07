@@ -46,9 +46,9 @@ flask-migrate = "*"
 flask-socketio = "*"
 flask-jwt-extended = "*"
 flask-cors = "*"
-flask-mail = "*"
 flask-dance = "*"
 psycopg2-binary = "*"
+flask-mail = "*"
 
 [dev-packages]
 

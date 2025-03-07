@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy.dialects.postgresql import ENUM
 from datetime import datetime
+from uuid import uuid4
 
 db = SQLAlchemy()
 
@@ -17,9 +18,10 @@ class User(db.Model, SerializerMixin):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), default="user")
-    notifications_enabled = db.Column(db.Boolean, default=True)  
-    is_verified = db.Column(db.Boolean, default=False)
-    verification_token = db.Column(db.String(100), nullable=True)
+    notifications_enabled = db.Column(db.Boolean, default=True) 
+    workspace_id = db.Column(db.String(36), db.ForeignKey('workspace.id', ondelete="SET NULL"), nullable=True) 
+    #is_verified = db.Column(db.Boolean, default=False)
+    #verification_token = db.Column(db.String(100), nullable=True)
     reset_token = db.Column(db.String(100), nullable=True)
     token_expiry = db.Column(db.DateTime, nullable=True)
 
@@ -33,8 +35,19 @@ class User(db.Model, SerializerMixin):
         "-tasks_assigned.user",
         "-tasklists",
         "-comments.user",
-        "-notifications.user"
+        "-notifications.user",
+        "-workspace",
+        "-reset_token",
+        "-token_expiry",
     )
+
+
+class Workspace(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid4()))
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    users = db.relationship('User', backref='workspace', lazy=True)
+
+    serialize_rules = ("-users.workspace",)
 
 
 class TaskList(db.Model, SerializerMixin):
