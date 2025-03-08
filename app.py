@@ -10,8 +10,6 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-print("JWT_SECRET_KEY:", os.getenv("JWT_SECRET_KEY"))
-print("DATABASE_URL:", os.getenv("DATABASE_URL")) 
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, resources={r"/*": {"origins": os.getenv("CORS_ALLOWED_ORIGINS", "*")}})
@@ -29,12 +27,13 @@ app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "your-secret-key")
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "your-default-secret")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
 
 
 db.init_app(app)
 migrate = Migrate(app, db)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins=["https://taskly-app-q35u.onrender.com"])
 jwt = JWTManager(app)
 
 from views import *
@@ -61,4 +60,4 @@ def index():
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000)) 
-    socketio.run(app, host="0.0.0.0", port=port, debug=os.getenv("FLASK_ENV") != "production")
+    socketio.run(app, host="0.0.0.0", port=port, debug=os.getenv("FLASK_ENV") != "production", allow_unsafe_werkzeug=True)
