@@ -26,6 +26,7 @@ def add_user():
     
     if User.query.filter_by(username=username).first():
         return make_response(jsonify({"error": "Username already exists"}), 409)
+    
     if User.query.filter_by(email=email).first():
         return make_response(jsonify({"error": "Email already exists"}), 409)
 
@@ -33,24 +34,30 @@ def add_user():
     #send_verification_email(email, verification_token)
     #verification_token = str(uuid.uuid4()) 
 
-    workspace = Workspace(name=f"{username}'s Workspace")
-    db.session.add(workspace)
-    db.session.commit()
- 
-    new_user = User(username=username, email=email, password=hashed_password, workspace_id=workspace.id)  #is_verified=False #verification_token=verification_token)
-    db.session.add(new_user)
-    db.session.commit()
+    try:
+        workspace = Workspace(name=f"{username}'s Workspace")
+        db.session.add(workspace)
+        db.session.flush() 
 
-    return make_response(jsonify({
-        "success": "User registered successfully", 
-        "user": {
-            "id": new_user.id,
-            "username": new_user.username,
-            "email": new_user.email,
-            "workspace_id": new_user.workspace_id
-        }
-    }), 201)
+        new_user = User(username=username, email=email, password=hashed_password, workspace_id=workspace.id)
+        db.session.add(new_user)
 
+        db.session.commit()
+
+        return make_response(jsonify({
+            "success": "User registered successfully",
+            "user": {
+                "id": new_user.id,
+                "username": new_user.username,
+                "email": new_user.email,
+                "workspace_id": new_user.workspace_id
+            }
+        }), 201)
+    
+    except Exception as e:
+        db.session.rollback()  
+        return make_response(jsonify({"error": f"Registration failed: {str(e)}"}), 500)
+    
 @auth_bp.route("/verify-email/<token>", methods=["GET"])
 def verify_email(token):
     user = User.query.filter_by(verification_token=token).first()
