@@ -10,9 +10,11 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
+print("JWT_SECRET_KEY:", os.getenv("JWT_SECRET_KEY"))
+print("DATABASE_URL:", os.getenv("DATABASE_URL")) 
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ALLOWED_ORIGINS", "*")}})
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": os.getenv("CORS_ALLOWED_ORIGINS", "*")}})
 
 app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
 app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
@@ -26,7 +28,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///taskly.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "your-secret-key")
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
 
 

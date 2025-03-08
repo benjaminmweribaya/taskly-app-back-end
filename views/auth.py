@@ -43,7 +43,7 @@ def add_user():
         db.session.add(new_user)
         db.session.commit()
 
-        access_token = create_access_token(identity=str(new_user.id), expires_delta=timedelta(hours=12))
+        access_token = create_access_token(identity=str(new_user.id))
         refresh_token = create_refresh_token(identity=str(new_user.id))
         return make_response(jsonify({
             "success": "User registered successfully",
@@ -61,6 +61,29 @@ def add_user():
         db.session.rollback()  
         return make_response(jsonify({"error": f"Registration failed: {str(e)}"}), 500)
     
+@auth_bp.route("/session", methods=["GET"])
+@jwt_required()
+def check_session():
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+    
+    if user:
+        workspace = db.session.get(Workspace, user.workspace_id)  
+        return jsonify({
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "workspace": {
+                    "id": workspace.id if workspace else None,
+                    "name": workspace.name if workspace else "No Workspace"
+                }
+            }
+        })
+    
+    return jsonify({"error": "Unauthorized"}), 401
+
+
 @auth_bp.route("/verify-email/<token>", methods=["GET"])
 def verify_email(token):
     user = User.query.filter_by(verification_token=token).first()
@@ -89,7 +112,7 @@ def login():
         #return jsonify({"error": "Please verify your email before logging in."}), 403
 
     if user and check_password_hash(user.password, password):
-        access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(hours=12))
+        access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         
         return make_response(jsonify({
@@ -110,7 +133,7 @@ def login():
 @jwt_required(refresh=True)
 def refresh():
     user_id = get_jwt_identity()
-    new_access_token = create_access_token(identity=user_id, expires_delta=timedelta(hours=12))
+    new_access_token = create_access_token(identity=user_id)
     return make_response(jsonify({"access_token": new_access_token}), 200)
 
 
