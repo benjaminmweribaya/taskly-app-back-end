@@ -41,7 +41,15 @@ def add_user():
     db.session.add(new_user)
     db.session.commit()
 
-    return make_response(jsonify({"success": "User registered successfully", "workspace_id": workspace.id}), 201)
+    return make_response(jsonify({
+        "success": "User registered successfully", 
+        "user": {
+            "id": new_user.id,
+            "username": new_user.username,
+            "email": new_user.email,
+            "workspace_id": new_user.workspace_id
+        }
+    }), 201)
 
 @auth_bp.route("/verify-email/<token>", methods=["GET"])
 def verify_email(token):
@@ -74,7 +82,16 @@ def login():
         access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(hours=12))
         refresh_token = create_refresh_token(identity=str(user.id))
         
-        return make_response(jsonify({"access_token": access_token, "refresh_token": refresh_token, "workspace_id": user.workspace_id}), 200)
+        return make_response(jsonify({
+            "access_token": access_token, 
+            "refresh_token": refresh_token, 
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "workspace_id": user.workspace_id
+            }
+        }), 200)
 
     return make_response(jsonify({"error": "Invalid email or password"}), 400)
 
