@@ -41,11 +41,14 @@ def add_user():
 
         new_user = User(username=username, email=email, password=hashed_password, workspace_id=workspace.id)
         db.session.add(new_user)
-
         db.session.commit()
 
+        access_token = create_access_token(identity=str(new_user.id), expires_delta=timedelta(hours=12))
+        refresh_token = create_refresh_token(identity=str(new_user.id))
         return make_response(jsonify({
             "success": "User registered successfully",
+            "access_token": access_token,
+            "refresh_token": refresh_token,
             "user": {
                 "id": new_user.id,
                 "username": new_user.username,
