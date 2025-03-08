@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 python-dotenv = "*"
 cors = "*"
-gevent = "*"
 alembic = "*"
 aniso8601 = "==10.0.0"
 bidict = "==0.23.1"
@@ -15,7 +14,6 @@ certifi = "==2025.1.31"
 click = "==8.1.8"
 distlib = "==0.3.9"
 dnspython = "==2.7.0"
-eventlet = "==0.39.0"
 filelock = "==3.17.0"
 flask-restful = "==0.3.10"
 flask-sqlalchemy = "*"
@@ -49,6 +47,7 @@ flask-cors = "*"
 flask-dance = "*"
 psycopg2-binary = "*"
 flask-mail = "*"
+gevent = "*"
 
 [dev-packages]
 

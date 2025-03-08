@@ -33,7 +33,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
 
 db.init_app(app)
 migrate = Migrate(app, db)
-socketio = SocketIO(app, cors_allowed_origins=["https://taskly-app-q35u.onrender.com"])
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
 jwt = JWTManager(app)
 
 from views import *
@@ -60,4 +60,4 @@ def index():
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000)) 
-    socketio.run(app, host="0.0.0.0", port=port, debug=os.getenv("FLASK_ENV") != "production", allow_unsafe_werkzeug=True)
+    socketio.run(app, host="0.0.0.0", port=port, debug=os.getenv("FLASK_ENV") != "production", allow_unsafe_werkzeug=True, use_reloader=False)

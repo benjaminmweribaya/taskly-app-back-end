@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "44f06a6dec4df0b3a70dc1ccd1339bcf0e6d9083312fd4c7fb26fa889c3d5d98"
+            "sha256": "f774d9485fed7f69e563e3c353d67f4ef6561906ff1f4515041559b482c543ce"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -207,15 +207,6 @@
             "markers": "python_version >= '3.9'",
             "version": "==2.7.0"
         },
-        "eventlet": {
-            "hashes": [
-                "sha256:01ba0aa6ee2452690fc02b274a2409598a13b997c7b5af9dc66600fa42015a79",
-                "sha256:9522ca09ad4c1f874c238f06492a7e217ddb13bdeace4475d3b700dd0ba1f6be"
-            ],
-            "index": "pypi",
-            "markers": "python_version >= '3.8'",
-            "version": "==0.39.0"
-        },
         "filelock": {
             "hashes": [
                 "sha256:533dc2f7ba78dc2f0f531fc6c4940addf7b70a481e269a5a3b93be94ffbe8338",
@@ -310,7 +301,7 @@
                 "sha256:929292d34f5872e70396626ef385ec22355a1fae8ad29e1a734c3e43f9fbc216",
                 "sha256:bd2968309307861edae1458a4f8a4f3598c03be43b97521076aebf5d94c07b05"
             ],
-            "markers": "python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2, 3.3'",
+            "markers": "python_version >= '2.6' and python_version not in '3.0, 3.1, 3.2'",
             "version": "==1.0.0"
         },
         "gevent": {
