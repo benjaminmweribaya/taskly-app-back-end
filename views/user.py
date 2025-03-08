@@ -5,10 +5,9 @@ from functools import wraps
 
 user_bp = Blueprint("user_bp", __name__)
 
-# Admin Role Required Decorator
+
 def admin_required(fn):
     @wraps(fn)
-    @jwt_required()
     def wrapper(*args, **kwargs):
         user_id = get_jwt_identity()
         current_user = db.session.get(User, user_id)
@@ -18,9 +17,8 @@ def admin_required(fn):
 
         return fn(*args, **kwargs)
 
-    return wrapper
+    return jwt_required()(wrapper)  
 
-# Get all users (Admin Only)
 @user_bp.route("/users", methods=["GET"])
 @jwt_required()
 @admin_required
@@ -37,7 +35,9 @@ def get_users():
         ],
         "total": users.total,
         "pages": users.pages,
-        "current_page": users.page
+        "current_page": users.page,
+        "next_page": users.next_num if users.has_next else None,
+        "prev_page": users.prev_num if users.has_prev else None
     }), 200
 
 
