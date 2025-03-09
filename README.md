@@ -7,7 +7,8 @@ Taskly is a task management system designed to help users efficiently organize a
 ## Resources
 - Deployed Backend: [https://taskly-app-q35u.onrender.com]
 - Deployed Frontend: [https://taskly-app-iota.vercel.app]
-- Slides link: []
+- Slides link: [https://docs.google.com/presentation/d/1xOcORaEO7jcECurvcL3LSUZDYCb-8kgVMYuOM4AK4WY/edit?usp=sharing]
+- Frontend link:[https://github.com/benjaminmweribaya/taskly-app-front-end/tree/main]
 
 ## Technologies Used
 - **Backend:** Flask, Flask-JWT-Extended, Flask-SQLAlchemy  
@@ -17,6 +18,42 @@ Taskly is a task management system designed to help users efficiently organize a
 - **Deployment:** Render  
 - **Others:** SQLAlchemy Serializer, Gunicorn  
 
+## Project Structure
+        ├── app.py
+        ├── instance
+        │   └── taskly.db
+        ├── LICENSE.md
+        ├── migrations
+        │   ├── alembic.ini
+        │   ├── env.py
+        │   ├── README
+        │   └── script.py.mako
+        ├── models.py
+        ├── Pipfile
+        ├── Pipfile.lock
+        ├── __pycache__
+        │   ├── app.cpython-312.pyc
+        │   └── models.cpython-312.pyc
+        ├── README.md
+        ├── requirements.txt
+        ├── seed.py
+        ├── task
+        │   ├── bin
+        │   ├── include
+        │   ├── lib
+        │   ├── lib64 -> lib
+        │   ├── pipenv-proper-names.txt
+        │   ├── pyvenv.cfg
+        │   └── src
+        └── views
+            ├── auth.py
+            ├── comments.py
+            ├── __init__.py
+            ├── notifications.py
+            ├── taskassignment.py
+            ├── tasklist.py
+            ├── task.py
+            └── user.py
 ## Prerequisites
 Before running this project, ensure you have:  
 - Python 3.8 + installed  
