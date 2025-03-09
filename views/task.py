@@ -31,15 +31,25 @@ def add_task():
     tasklist = validate_tasklist(data.get("tasklist_id"))
     if not tasklist:
         return jsonify({"error": "TaskList not found"}), 404
-
+    
+    due_date = None
+    if "due_date" in data:
+        try:
+            due_date = datetime.strptime(data["due_date"], "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                due_date = datetime.strptime(data["due_date"], "%Y-%m-%d")
+            except ValueError:
+                return jsonify({"error": "Invalid date format"}), 400
+            
     new_task = Task(
-        title=data.get["title"],
+        title=data.get("title"),
         description=data.get("description"),
-        due_date=datetime.strptime(data["due_date"], "%Y-%m-%d") if "due_date" in data else None,
+        due_date=due_date,
         priority=data.get("priority", "medium"),
         status=data.get("status", "pending"),
         created_at=datetime.utcnow(),
-        tasklist_id="tasklist_id"
+        tasklist_id=data["tasklist_id"]
     )
 
     db.session.add(new_task)
