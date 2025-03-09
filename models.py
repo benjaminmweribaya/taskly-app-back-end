@@ -6,7 +6,6 @@ from uuid import uuid4
 
 db = SQLAlchemy()
 
-# Enum types
 priority_enum = ENUM("low", "medium", "high", "urgent", name="priority_levels", create_type=True)
 status_enum = ENUM("pending", "in-progress", "completed", "todo", name="task_status", create_type=True)
 

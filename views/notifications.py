@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Notification, User, Task
 from datetime import datetime, timedelta
-from app import socketio  
+#from app import socketio  
 
 notifications_bp = Blueprint("notifications_bp", __name__)
 
@@ -10,16 +10,15 @@ def get_user():
     user_id = get_jwt_identity()
     return User.query.get(user_id)
 
-# Send real-time notifications to a user
 def send_notification(user_id, message, task_id=None):
     """Creates and emits a real-time notification."""
     notification = Notification(user_id=user_id, message=message, task_id=task_id)
     db.session.add(notification)
     db.session.commit()
 
-    socketio.emit(f"notification_{user_id}", {"message": message}, room=f"user_{user_id}")
+    #socketio.emit(f"notification_{user_id}", {"message": message}, room=f"user_{user_id}")
 
-# Get all notifications for the logged-in user
+
 @notifications_bp.route("/notifications", methods=["GET"])
 @jwt_required()
 def get_notifications():
