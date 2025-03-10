@@ -45,6 +45,7 @@ app.register_blueprint(task_bp)
 app.register_blueprint(task_assignment_bp)
 app.register_blueprint(comments_bp)
 app.register_blueprint(notifications_bp)
+app.register_blueprint(task_stats_bp)
 
 
 @jwt.token_in_blocklist_loader
