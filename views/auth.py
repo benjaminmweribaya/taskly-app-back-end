@@ -235,13 +235,14 @@ def send_reset_email(user, token):
     #return jsonify({"access_token": access_token, "message": "Google authentication successful"}), 200
 
 # Helper function to send email verification
-#def send_verification_email(email, token):
-    #verification_url = url_for('auth_bp.verify_email', token=token, _external=True)
-    #msg = Message("Verify Your Email", sender=os.getenv("MAIL_USERNAME"), recipients=[email])
-    #msg.body = f"Click the following link to verify your email: {verification_url}\nIf you did not sign up, please ignore this email."
-    #mail.send(msg)
+# def send_verification_email(email, token):
+#     verification_url = url_for('auth_bp.verify_email', token=token, _external=True)
+#     msg = Message("Verify Your Email", sender=os.getenv("MAIL_USERNAME"), recipients=[email])
+#     msg.body = f"Click the following link to verify your email: {verification_url}\nIf you did not sign up, please ignore this email."
+#     mail.send(msg)
 
-    #return jsonify({"message": "Verification email sent"}), 200
+#     return jsonify({"message": "Verification email sent"}), 200
 
 
-    
+
+
