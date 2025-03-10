@@ -41,13 +41,29 @@ class User(db.Model, SerializerMixin):
     )
 
 
-class Workspace(db.Model):
+class Workspace(db.Model, SerializerMixin):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid4()))
     name = db.Column(db.String(100), unique=True, nullable=False)
-    users = db.relationship('User', backref='workspace', lazy=True)
+    users = db.relationship('User', backref='workspace', cascade="all, delete-orphan", lazy=True)
 
     serialize_rules = ("-users.workspace",)
 
+
+class WorkspaceInvite(db.Model, SerializerMixin):
+    __tablename__ = "workspace_invites"
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(100), nullable=False) 
+    workspace_id = db.Column(db.String(36), db.ForeignKey("workspace.id", ondelete="CASCADE"), nullable=False)
+    invited_by = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)  
+    status = db.Column(db.String(20), default="pending")  
+    token = db.Column(db.String(100), unique=True, nullable=False) 
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    workspace = db.relationship("Workspace", backref="invites")
+    inviter = db.relationship("User", foreign_keys=[invited_by])
+
+    serialize_rules = ("-token", "-inviter.workspace")
 
 class TaskList(db.Model, SerializerMixin):
     __tablename__ = "tasklists"
