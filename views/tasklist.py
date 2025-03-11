@@ -5,21 +5,27 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 tasklist_bp = Blueprint('tasklist', __name__, url_prefix='/tasklists')
 
-# Get all task lists for the authenticated user
 @tasklist_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_all_tasklist():
     user_id = get_jwt_identity()
-    page = request.args.get("page", 1, type=int)  # Default to page 1
-    per_page = request.args.get("per_page", 5, type=int) # Default 5 items per page
+    page = request.args.get("page", 1, type=int)  
+    per_page = request.args.get("per_page", 5, type=int) 
     tasklist = TaskList.query.filter_by(user_id=user_id).paginate(page=page, per_page=per_page, error_out=False)
 
     if not tasklist:
         return jsonify({"error": "Task list not found"}), 404
     
-    return jsonify([{"id": tl.id, "name": tl.name} for tl in tasklist]), 200
+    return jsonify([
+        {
+            "id": tasklist.id, 
+            "name": tasklist.name,
+            "tasks": [{"id": task.id, "title": task.title} for task in tasklist.tasks]
+        } 
+        for tasklist in tasklist
+    ]), 200
 
-# Get a specific task list by ID
+
 @tasklist_bp.route('/<int:tasklist_id>', methods=['GET'])
 @jwt_required()
 def get_tasklist(tasklist_id):
@@ -29,9 +35,13 @@ def get_tasklist(tasklist_id):
     if not tasklist:
         return jsonify({"error": "Task list not found"}), 404
 
-    return jsonify({"id": tasklist.id, "name": tasklist.name}), 200
+    return jsonify({
+        "id": tasklist.id, 
+        "name": tasklist.name,
+        "tasks": [{"id": task.id, "title": task.title} for task in tasklist.tasks]
+    }), 200
 
-# Create a new task list
+
 @tasklist_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_tasklist():
@@ -45,7 +55,12 @@ def create_tasklist():
     db.session.add(new_tasklist)
     db.session.commit()
 
-    return jsonify({"message": "Task list created successfully", "id": new_tasklist.id}), 201
+    return jsonify({
+        "message": "Task list created successfully", 
+        "id": new_tasklist.id,
+        "name": new_tasklist.name,
+        "tasks": []
+    }), 201
 
 # Update a task list
 @tasklist_bp.route('/<int:tasklist_id>', methods=['PUT'])
