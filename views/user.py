@@ -1,6 +1,6 @@
 from flask import Blueprint, request, make_response, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User , Workspace , WorkspaceInvite
+from models import db, User, Workspace, WorkspaceInvite
 from flask_mail import Mail, Message
 from functools import wraps
 import secrets
@@ -9,7 +9,9 @@ user_bp = Blueprint("user_bp", __name__)
 
 mail = Mail()
 
+# Admin access decorator
 def admin_required(fn):
+    @jwt_required()
     @wraps(fn)
     def wrapper(*args, **kwargs):
         user_id = get_jwt_identity()
@@ -20,10 +22,10 @@ def admin_required(fn):
 
         return fn(*args, **kwargs)
 
-    return jwt_required()(wrapper)  
+    return wrapper
 
+# Get all users (Admin only)
 @user_bp.route("/users", methods=["GET"])
-@jwt_required()
 @admin_required
 def get_users():
     page = request.args.get("page", 1, type=int)
@@ -42,7 +44,6 @@ def get_users():
         "next_page": users.next_num if users.has_next else None,
         "prev_page": users.prev_num if users.has_prev else None
     }), 200
-
 
 # Get a specific user by ID
 @user_bp.route("/users/<int:user_id>", methods=["GET"])
@@ -63,7 +64,7 @@ def get_user(user_id):
 @jwt_required()
 def update_user():
     user_id = get_jwt_identity()
-    user = db.session.get(User,user_id)  
+    user = db.session.get(User, user_id)  
 
     if not user:
         return make_response({"error": "User not found"}), 404  
@@ -82,8 +83,7 @@ def update_user():
     db.session.commit()
     return make_response({"success": "User updated successfully"}), 200
 
-
-#Delete user account
+# Delete user account
 @user_bp.route("/users/deleteaccount", methods=["DELETE"])
 @jwt_required()
 def delete_user():
@@ -98,6 +98,7 @@ def delete_user():
 
     return make_response({"success": "Account deleted successfully"}), 200
 
+# Invite a user to a workspace
 @user_bp.route("/invite", methods=["POST"])
 @jwt_required()
 def invite_user():
@@ -113,7 +114,7 @@ def invite_user():
     if not inviter:
         return jsonify({"error": "Invalid user"}), 404
 
-    workspace = db.session.get(Workspace, inviter.workspace_id) # Adjust based on your logic
+    workspace = db.session.get(Workspace, inviter.workspace_id)  # Ensure the user has a workspace
 
     if not workspace:
         return jsonify({"error": "Workspace not found"}), 404
@@ -128,15 +129,16 @@ def invite_user():
     db.session.add(invite)
     db.session.commit()
 
-    invite_url = f"https://taskly-app-iota.vercel.app/invite/{invite_token}"  # Update with the correct frontend route
+    invite_url = f"https://taskly-app-iota.vercel.app/invite/{invite_token}"  # Corrected URL
 
-    msg = Message("Workspace Invitation", sender="your-email@example.com", recipients=[email])
+    msg = Message("Workspace Invitation", sender="noreply@taskly.com", recipients=[email])
     msg.body = f"You've been invited to join {workspace.name}.\nClick here to accept: {invite_url}"
     mail.send(msg)
 
     return jsonify({"message": "Invitation email sent successfully"}), 200
 
-@user_bp.route("/invite/accept/<int:token>", methods=["POST"])
+# Accept an invite to a workspace
+@user_bp.route("/invite/accept/<string:token>", methods=["POST"])
 @jwt_required()
 def accept_invite(token):
     invite = WorkspaceInvite.query.filter_by(token=token, status="pending").first()
@@ -157,6 +159,7 @@ def accept_invite(token):
 
     return jsonify({"message": "Joined workspace successfully!"}), 200
 
+# Get workspace members
 @user_bp.route("/workspace/<int:workspace_id>/members", methods=["GET"])
 @jwt_required()
 def get_workspace_members(workspace_id):
@@ -170,5 +173,11 @@ def get_workspace_members(workspace_id):
 
     return jsonify({
         "members": [{"id": m.id, "username": m.username, "email": m.email} for m in members],
-        "pending_invites": [{"email": i.email, "invited_by": i.inviter.username} for i in invites]
+        "pending_invites": [
+            {
+                "email": i.email,
+                "invited_by": db.session.get(User, i.invited_by).username  # Fixed inviter reference
+            }
+            for i in invites
+        ]
     }), 200
