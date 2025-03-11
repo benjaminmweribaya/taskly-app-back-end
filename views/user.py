@@ -128,7 +128,7 @@ def invite_user():
     db.session.add(invite)
     db.session.commit()
 
-    invite_url = f"https://taskly-app-iota.vercel.app//invite/{invite_token}"  # Update with the correct frontend route
+    invite_url = f"https://taskly-app-iota.vercel.app/invite/{invite_token}"  # Update with the correct frontend route
 
     msg = Message("Workspace Invitation", sender="your-email@example.com", recipients=[email])
     msg.body = f"You've been invited to join {workspace.name}.\nClick here to accept: {invite_url}"
