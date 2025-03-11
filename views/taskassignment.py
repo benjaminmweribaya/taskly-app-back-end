@@ -25,20 +25,20 @@ def assign_users_to_task(task_id):
         if not user:
             continue
 
-            assignment = TaskAssignment.query.filter_by(task_id=task.id, user_id=user.id).first()
-            if assignment:
-                continue
+        assignment = TaskAssignment.query.filter_by(task_id=task.id, user_id=user.id).first()
+        if assignment:
+            continue
 
-            new_assignment = TaskAssignment(task_id=task.id, user_id=user.id)
-            db.session.add(new_assignment)
-            assigned_users.append({
-                "id": user.id,
-                "username": user.username,
-                "email": user.email
-            })
+        new_assignment = TaskAssignment(task_id=task.id, user_id=user.id)
+        db.session.add(new_assignment)
+        assigned_users.append({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        })
 
-            notification = Notification(user_id=user.id, task_id=task.id, message=f"You have been assigned to task: {task.title}")
-            db.session.add(notification)
+        notification = Notification(user_id=user.id, task_id=task.id, message=f"You have been assigned to task: {task.title}")
+        db.session.add(notification)
 
     db.session.commit()
     return jsonify({"success": "Users assigned successfully", "assigned_users": assigned_users}), 200
