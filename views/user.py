@@ -104,17 +104,18 @@ def delete_user():
 def invite_user():
     data = request.get_json()
     email = data.get("email")
+    workspace_id = data.get("workspace_id")  
 
-    if not email:
-        return jsonify({"error": "Email is required"}), 400
-    
+    if not email or not workspace_id:
+        return jsonify({"error": "Email and workspace_id are required"}), 400
+
     user_id = get_jwt_identity()
     inviter = db.session.get(User, user_id)
     
     if not inviter:
         return jsonify({"error": "Invalid user"}), 404
 
-    workspace = db.session.get(Workspace, inviter.workspace_id)  # Ensure the user has a workspace
+    workspace = db.session.get(Workspace, workspace_id)  
 
     if not workspace:
         return jsonify({"error": "Workspace not found"}), 404
@@ -123,17 +124,21 @@ def invite_user():
     if existing_invite and existing_invite.status == "pending":
         return jsonify({"error": "Invite already sent"}), 400
 
-    invite_token = secrets.token_urlsafe(32)  # Generate a unique invite token
+    invite_token = secrets.token_urlsafe(32)
     invite = WorkspaceInvite(email=email, workspace_id=workspace.id, invited_by=inviter.id, token=invite_token)
     
     db.session.add(invite)
     db.session.commit()
 
-    invite_url = f"https://taskly-app-iota.vercel.app/invite/{invite_token}"  # Corrected URL
+    invite_url = f"https://taskly-app-iota.vercel.app/invite/{invite_token}"  
 
-    msg = Message("Workspace Invitation", sender="noreply@taskly.com", recipients=[email])
-    msg.body = f"You've been invited to join {workspace.name}.\nClick here to accept: {invite_url}"
-    mail.send(msg)
+    try:
+        msg = Message("Workspace Invitation", sender="noreply@taskly.com", recipients=[email])
+        msg.body = f"You've been invited to join {workspace.name}.\nClick here to accept: {invite_url}"
+        mail.send(msg)
+    except Exception as e:
+        print("Email Error:", e)
+        return jsonify({"error": "Failed to send email, but invite was created", "invite_url": invite_url}), 200
 
     return jsonify({"message": "Invitation email sent successfully"}), 200
 
@@ -152,7 +157,7 @@ def accept_invite(token):
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    user.workspace_id = invite.workspace_id  # Add user to workspace
+    user.workspace_id = invite.workspace_id  
     invite.status = "accepted"
 
     db.session.commit()
@@ -176,7 +181,7 @@ def get_workspace_members(workspace_id):
         "pending_invites": [
             {
                 "email": i.email,
-                "invited_by": db.session.get(User, i.invited_by).username  # Fixed inviter reference
+                "invited_by": db.session.get(User, i.invited_by).username  
             }
             for i in invites
         ]
