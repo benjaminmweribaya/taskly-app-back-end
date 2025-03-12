@@ -18,6 +18,9 @@ def assign_users_to_task(task_id):
     tasklist = TaskList.query.get(task.tasklist_id)
     if not tasklist or tasklist.user_id != current_user_id:
         return jsonify({'error': 'Unauthorized to assign users to this task'}), 403
+    
+    if not user_ids:  
+        return jsonify({"success": "No users assigned (Task remains unassigned)"}), 200
 
     assigned_users = []
     for user_id in user_ids:
