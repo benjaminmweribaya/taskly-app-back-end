@@ -114,6 +114,9 @@ def invite_user():
     
     if not inviter:
         return jsonify({"error": "Invalid user"}), 404
+    
+    if inviter.workspace_id != workspace.id:
+        return jsonify({"error": "You are not a member of this workspace"}), 403
 
     workspace = db.session.get(Workspace, workspace_id)  
 
@@ -186,3 +189,36 @@ def get_workspace_members(workspace_id):
             for i in invites
         ]
     }), 200
+
+
+@user_bp.route("/invite/generate-link", methods=["POST"])
+@jwt_required()
+def generate_invite_link():
+    data = request.get_json()
+    workspace_id = data.get("workspace_id")
+
+    if not workspace_id:
+        return jsonify({"error": "workspace_id is required"}), 400
+
+    user_id = get_jwt_identity()
+    user = db.session.get(User, user_id)
+
+    if not user or user.workspace_id != workspace_id:
+        return jsonify({"error": "Unauthorized to generate invite link"}), 403
+
+    workspace = db.session.get(Workspace, workspace_id)
+    if not workspace:
+        return jsonify({"error": "Workspace not found"}), 404
+
+    existing_invite = WorkspaceInvite.query.filter_by(workspace_id=workspace_id, status="active").first()
+    
+    if existing_invite:
+        invite_token = existing_invite.token  
+    else:
+        invite_token = secrets.token_urlsafe(32)
+        invite = WorkspaceInvite(email="link-invite", workspace_id=workspace_id, token=invite_token, status="active")
+        db.session.add(invite)
+        db.session.commit()
+
+    invite_url = f"https://taskly-app-iota.vercel.app/invite/{invite_token}"
+    return jsonify({"link": invite_url}), 200

@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, resources={r"/*": {"origins": os.getenv("CORS_ALLOWED_ORIGINS", "*")}})
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": os.getenv("CORS_ALLOWED_ORIGINS", "*"), "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]}})
 
 app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
 app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
