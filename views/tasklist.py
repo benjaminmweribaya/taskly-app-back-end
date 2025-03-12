@@ -13,7 +13,7 @@ def get_all_tasklist():
     per_page = request.args.get("per_page", 5, type=int) 
     tasklist = TaskList.query.filter_by(user_id=user_id).paginate(page=page, per_page=per_page, error_out=False)
 
-    if not tasklist:
+    if not tasklist.items:
         return jsonify({"error": "Task list not found"}), 404
     
     return jsonify([
@@ -22,7 +22,7 @@ def get_all_tasklist():
             "name": tasklist.name,
             "tasks": [{"id": task.id, "title": task.title} for task in tasklist.tasks]
         } 
-        for tasklist in tasklist
+        for tasklist in tasklist.items
     ]), 200
 
 
@@ -42,6 +42,21 @@ def get_tasklist(tasklist_id):
     }), 200
 
 
+@tasklist_bp.route('/templates', methods=['GET'])
+@jwt_required()
+def get_tasklist_templates():
+    templates = TaskList.query.filter_by(is_template=True).all()
+
+    return jsonify([
+        {
+            "id": template.id,
+            "name": template.name,
+            "tasks": [{"id": task.id, "title": task.title} for task in template.tasks]
+        } 
+        for template in templates
+    ]), 200
+
+
 @tasklist_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_tasklist():
@@ -50,10 +65,20 @@ def create_tasklist():
 
     if not data or not data.get('name'):
         return jsonify({"error": "Task list name is required"}), 400
-
-    new_tasklist = TaskList(name=data['name'], user_id=user_id)
-    db.session.add(new_tasklist)
-    db.session.commit()
+    
+    if 'template_id' in data:
+        template = TaskList.query.filter_by(id=data['template_id'], is_template=True).first()
+        if not template:
+            return jsonify({"error": "Template not found"}), 404
+        
+        new_tasklist = TaskList(name=template.name, user_id=user_id)
+        new_tasklist.tasks = [Task(title=task.title, description=task.description) for task in template.tasks]
+        db.session.add(new_tasklist)
+        db.session.commit()
+    else:
+        new_tasklist = TaskList(name=data['name'], user_id=user_id)
+        db.session.add(new_tasklist)
+        db.session.commit()
 
     return jsonify({
         "message": "Task list created successfully", 
@@ -73,8 +98,12 @@ def update_tasklist(tasklist_id):
         return jsonify({"error": "Task list not found"}), 404
 
     data = request.get_json()
+
     if 'name' in data:
         tasklist.name = data['name']
+
+    if TaskList.query.filter_by(name=data['name'], user_id=user_id).first():
+        return jsonify({"error": "Task list name already exists"}), 400
 
     db.session.commit()
     return jsonify({"message": "Task list updated successfully"}), 200
