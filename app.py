@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_migrate import Migrate
 # from flask_socketio import SocketIO
 from flask_jwt_extended import JWTManager
@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True,origins=["https://taskly-app-iota.vercel.app"], 
+CORS(app, supports_credentials=True,origins=["http://localhost:5173", "https://taskly-app-iota.vercel.app"], 
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"])
 
@@ -39,7 +39,10 @@ migrate = Migrate(app, db)
 #socketio = SocketIO(app, cors_allowed_origins="*", async_mode="gevent")
 jwt = JWTManager(app)
 
-from views import *
+from views import (
+    user_bp, auth_bp, tasklist_bp, task_bp,
+    task_assignment_bp, comments_bp, notifications_bp, task_stats_bp
+)
 
 app.register_blueprint(user_bp)
 app.register_blueprint(auth_bp)
@@ -65,3 +68,4 @@ def index():
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000)) 
     #socketio.run(app, host="0.0.0.0", port=port, debug=os.getenv("FLASK_ENV") != "production", allow_unsafe_werkzeug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("FLASK_ENV") != "production", use_reloader=False)

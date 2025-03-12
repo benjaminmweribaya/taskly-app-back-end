@@ -1,18 +1,36 @@
 from app import app
-from models import db, User, TaskList, Task, TaskAssignment, Comment, Notification
+from models import db, User, TaskList, Task, TaskAssignment, Comment, Notification, Workspace, WorkspaceInvite
 from datetime import datetime
+from uuid import uuid4
 
-# Create a Flask app context
+# Seed database
 with app.app_context():
-    # Drop and recreate tables
     db.drop_all()
     db.create_all()
 
-    # Create users
-    user1 = User(username="john_doe", email="john@example.com", password="hashedpassword1", role="user", notifications_enabled=True)
-    user2 = User(username="jane_smith", email="jane@example.com", password="hashedpassword2", role="user", notifications_enabled=True)
+    # Create workspaces
+    workspace1 = Workspace(id=str(uuid4()), name="Development Team")
+    workspace2 = Workspace(id=str(uuid4()), name="Marketing Team")
+
+    db.session.add_all([workspace1, workspace2])
+    db.session.commit()
+
+    # Create users and assign them to workspaces
+    user1 = User(username="john_doe", email="john@example.com", password="hashedpassword1",
+                 role="user", workspace_id=workspace1.id)
+    user2 = User(username="jane_smith", email="jane@example.com", password="hashedpassword2",
+                 role="user", workspace_id=workspace2.id)
 
     db.session.add_all([user1, user2])
+    db.session.commit()
+
+    # Create workspace invites
+    invite1 = WorkspaceInvite(email="new_member@example.com", workspace_id=workspace1.id,
+                              invited_by=user1.id, status="pending", token=str(uuid4()))
+    invite2 = WorkspaceInvite(email="guest@example.com", workspace_id=workspace2.id,
+                              invited_by=user2.id, status="pending", token=str(uuid4()))
+
+    db.session.add_all([invite1, invite2])
     db.session.commit()
 
     # Create task lists
@@ -23,22 +41,10 @@ with app.app_context():
     db.session.commit()
 
     # Create tasks
-    task1 = Task(
-        title="Finish report", 
-        description="Complete the annual report.", 
-        due_date=datetime(2025, 3, 1),
-        priority="high", 
-        status="todo", 
-        tasklist_id=tasklist1.id
-    )
-    task2 = Task(
-        title="Buy groceries", 
-        description="Milk, eggs, bread.", 
-        due_date=datetime(2025, 3, 2),
-        priority="low", 
-        status="todo", 
-        tasklist_id=tasklist2.id
-    )
+    task1 = Task(title="Finish report", description="Complete the annual report.",
+                 due_date=datetime(2025, 3, 1), priority="high", status="todo", tasklist_id=tasklist1.id)
+    task2 = Task(title="Buy groceries", description="Milk, eggs, bread.",
+                 due_date=datetime(2025, 3, 2), priority="low", status="todo", tasklist_id=tasklist2.id)
 
     db.session.add_all([task1, task2])
     db.session.commit()
