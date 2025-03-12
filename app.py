@@ -13,7 +13,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.url_map.strict_slashes = False
-CORS(app, supports_credentials=True,origins=["https://taskly-app-iota.vercel.app"], 
+CORS(app, supports_credentials=True,origins=["https://taskly-app-iota.vercel.app", "http://localhost:5173/"], 
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"])
 
