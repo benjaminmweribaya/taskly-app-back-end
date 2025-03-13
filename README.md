@@ -5,7 +5,7 @@ Taskly is a task management system designed to help users efficiently organize a
 **By Benjamin Baya, Rome Ojuro , Larry Mecha and Nadifo Ismail**
 
 ## Resources
-- Deployed Backend: [https://taskly-app-q35u.onrender.com]
+- Deployed Backend: [https://taskly-app-9u0e.onrender.com]
 - Deployed Frontend: [https://taskly-app-iota.vercel.app]
 - Slides link: [https://docs.google.com/presentation/d/1xOcORaEO7jcECurvcL3LSUZDYCb-8kgVMYuOM4AK4WY/edit?usp=sharing]
 - Frontend link:[https://github.com/benjaminmweribaya/taskly-app-front-end/tree/main]
